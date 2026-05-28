@@ -16,6 +16,14 @@ import {
   updateItemSchema,
   decisionSchema,
 } from "@/lib/validation";
+import { emitEvent, type DomainEvent } from "@/lib/events";
+
+// Mapeia o estágio resultante de uma decisão para o evento de domínio.
+const DECISION_EVENT: Partial<Record<Stage, DomainEvent>> = {
+  [Stage.EM_PRODUCAO]: "item.script_approved",
+  [Stage.AJUSTE_PEDIDO]: "item.changes_requested",
+  [Stage.APROVADO]: "item.final_approved",
+};
 
 const itemInclude = {
   client: true,
@@ -50,7 +58,7 @@ export async function createItem(input: z.infer<typeof createItemSchema>) {
 
   const clientId = data.clientId ?? (await resolveClientId(data));
 
-  return prisma.contentItem.create({
+  const item = await prisma.contentItem.create({
     data: {
       clientId,
       title: data.title,
@@ -65,6 +73,9 @@ export async function createItem(input: z.infer<typeof createItemSchema>) {
     },
     include: itemInclude,
   });
+
+  emitEvent("item.created", item);
+  return item;
 }
 
 // Encontra um cliente por nome+contato; cria se não existir.
@@ -94,7 +105,7 @@ export async function updateItem(
   const willBeReady =
     data.markReadyForFinal && item.stage === Stage.EM_PRODUCAO;
 
-  return prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx) => {
     if (data.variants?.length) {
       for (const v of data.variants) {
         await tx.contentVariant.upsert({
@@ -137,6 +148,9 @@ export async function updateItem(
       include: itemInclude,
     });
   });
+
+  if (willBeReady) emitEvent("item.ready_for_final", updated);
+  return updated;
 }
 
 export type DecisionInput = z.infer<typeof decisionSchema> & {
@@ -151,7 +165,7 @@ export async function recordDecision(id: string, input: DecisionInput) {
 
   const target = nextStageForDecision(item.stage, input.gate, input.decision);
 
-  return prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx) => {
     await tx.approvalEvent.create({
       data: {
         contentItemId: id,
@@ -171,6 +185,10 @@ export async function recordDecision(id: string, input: DecisionInput) {
       include: itemInclude,
     });
   });
+
+  const event = DECISION_EVENT[target];
+  if (event) emitEvent(event, updated);
+  return updated;
 }
 
 export async function scheduleItem(
@@ -185,7 +203,7 @@ export async function scheduleItem(
       `Só itens APROVADO podem ser agendados (atual: ${item.stage}).`
     );
   }
-  return prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx) => {
     await tx.approvalEvent.create({
       data: {
         contentItemId: id,
@@ -206,6 +224,9 @@ export async function scheduleItem(
       include: itemInclude,
     });
   });
+
+  emitEvent("item.scheduled", updated);
+  return updated;
 }
 
 export async function publishItem(
@@ -220,9 +241,12 @@ export async function publishItem(
       `Só itens AGENDADO/APROVADO podem ser publicados (atual: ${item.stage}).`
     );
   }
-  return prisma.contentItem.update({
+  const updated = await prisma.contentItem.update({
     where: { id },
     data: { stage: Stage.PUBLICADO, publishedAt, stageChangedAt: new Date() },
     include: itemInclude,
   });
+
+  emitEvent("item.published", updated);
+  return updated;
 }
