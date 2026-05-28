@@ -1,0 +1,403 @@
+{
+  "name": "01 — Esteira de Producao GrowthMinds",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intake-growthminds",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "n01-wh-intake",
+      "name": "Webhook Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "intake-growthminds-wh"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a01",
+              "name": "title",
+              "value": "={{ $json.body.title ?? $json.body.assunto ?? ('Video ' + $now.toFormat('yyyy-MM-dd')) }}",
+              "type": "string"
+            },
+            {
+              "id": "a02",
+              "name": "clientName",
+              "value": "GrowthMinds — Dr. Kleber",
+              "type": "string"
+            },
+            {
+              "id": "a03",
+              "name": "clientContactName",
+              "value": "Dr. Kleber",
+              "type": "string"
+            },
+            {
+              "id": "a04",
+              "name": "networks",
+              "value": "={{ $json.body.networks ?? ['INSTAGRAM', 'YOUTUBE'] }}",
+              "type": "array"
+            },
+            {
+              "id": "a05",
+              "name": "source",
+              "value": "HEYGEN",
+              "type": "string"
+            },
+            {
+              "id": "a06",
+              "name": "briefing",
+              "value": "={{ $json.body.briefing ?? $json.body.descricao ?? $json.body.tema ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a07",
+              "name": "externalRef",
+              "value": "={{ $json.body.externalRef ?? $json.body.id ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a08",
+              "name": "heygenAvatarId",
+              "value": "={{ $json.body.heygenAvatarId ?? $env.HEYGEN_AVATAR_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "a09",
+              "name": "heygenVoiceId",
+              "value": "={{ $json.body.heygenVoiceId ?? $env.HEYGEN_VOICE_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "a10",
+              "name": "clientPhone",
+              "value": "={{ $json.body.clientPhone ?? $env.CLIENT_WHATSAPP_NUMBER }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n01-set-normalize",
+      "name": "Set Normaliza",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://pipeline.tudomudou.com.br/api/items",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.PIPELINE_SERVICE_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json.title, clientName: $json.clientName, clientContactName: $json.clientContactName, source: $json.source, networks: $json.networks, externalRef: $json.externalRef }) }}",
+        "options": {}
+      },
+      "id": "n01-http-create",
+      "name": "Pipeline Cria Item",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "b01", "name": "itemId", "value": "={{ $json.id }}", "type": "string" },
+            { "id": "b02", "name": "itemTitle", "value": "={{ $json.title }}", "type": "string" },
+            { "id": "b03", "name": "briefing", "value": "={{ $('Set Normaliza').item.json.briefing }}", "type": "string" },
+            { "id": "b04", "name": "heygenAvatarId", "value": "={{ $('Set Normaliza').item.json.heygenAvatarId }}", "type": "string" },
+            { "id": "b05", "name": "heygenVoiceId", "value": "={{ $('Set Normaliza').item.json.heygenVoiceId }}", "type": "string" },
+            { "id": "b06", "name": "clientPhone", "value": "={{ $('Set Normaliza').item.json.clientPhone }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n01-set-itemid",
+      "name": "Set Item ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1080, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-opus-4-7', max_tokens: 2000, messages: [{ role: 'user', content: 'Voce e um roteirista especialista em conteudo medico educativo para o Dr. Kleber Melo (GrowthMinds). Crie um roteiro para video curto (60-90 segundos) sobre o tema: \"' + $json.briefing + '\"\\n\\nTitulo do video: \"' + $json.itemTitle + '\"\\n\\nRegras:\\n- Linguagem acessivel ao publico leigo\\n- Medicina baseada em evidencias\\n- Estrutura: GANCHO (5s impactante) → DESENVOLVIMENTO (50-70s com dica pratica) → CTA (10s convidando para seguir)\\n- Sem jargoes medicos sem explicacao\\n- Tom: didatico, confiante e humanizado\\n\\nRetorne APENAS o roteiro corrido, sem titulos de secao ou formatacao extra.' }] }) }}",
+        "options": {}
+      },
+      "id": "n01-http-claude",
+      "name": "Claude Gera Roteiro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1360, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "c01", "name": "itemId", "value": "={{ $('Set Item ID').item.json.itemId }}", "type": "string" },
+            { "id": "c02", "name": "itemTitle", "value": "={{ $('Set Item ID').item.json.itemTitle }}", "type": "string" },
+            { "id": "c03", "name": "script", "value": "={{ $json.content[0].text }}", "type": "string" },
+            { "id": "c04", "name": "heygenAvatarId", "value": "={{ $('Set Item ID').item.json.heygenAvatarId }}", "type": "string" },
+            { "id": "c05", "name": "heygenVoiceId", "value": "={{ $('Set Item ID').item.json.heygenVoiceId }}", "type": "string" },
+            { "id": "c06", "name": "clientPhone", "value": "={{ $('Set Item ID').item.json.clientPhone }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n01-set-script",
+      "name": "Set Extrai Roteiro",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1640, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ `https://pipeline.tudomudou.com.br/api/items/${$json.itemId}` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.PIPELINE_SERVICE_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ script: $json.script }) }}",
+        "options": {}
+      },
+      "id": "n01-http-save-script",
+      "name": "Pipeline Salva Roteiro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.HEYGEN_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ video_inputs: [{ character: { type: 'avatar', avatar_id: $('Set Extrai Roteiro').item.json.heygenAvatarId, avatar_style: 'normal' }, voice: { type: 'text', voice_id: $('Set Extrai Roteiro').item.json.heygenVoiceId, input_text: $('Set Extrai Roteiro').item.json.script, speed: 1.0 }, background: { type: 'color', value: '#1a1a2e' } }], aspect_ratio: '9:16', test: false }) }}",
+        "options": {}
+      },
+      "id": "n01-http-heygen",
+      "name": "HeyGen Submete Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "d01", "name": "itemId", "value": "={{ $('Set Extrai Roteiro').item.json.itemId }}", "type": "string" },
+            { "id": "d02", "name": "itemTitle", "value": "={{ $('Set Extrai Roteiro').item.json.itemTitle }}", "type": "string" },
+            { "id": "d03", "name": "heygenVideoId", "value": "={{ $json.data.video_id }}", "type": "string" },
+            { "id": "d04", "name": "clientPhone", "value": "={{ $('Set Extrai Roteiro').item.json.clientPhone }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n01-set-heygenid",
+      "name": "Set HeyGen ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2480, 300]
+    },
+    {
+      "parameters": {
+        "unit": "minutes",
+        "value": 5
+      },
+      "id": "n01-wait-5min",
+      "name": "Aguarda 5min",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2760, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ `https://api.heygen.com/v1/video_status.get?video_id=${$('Set HeyGen ID').item.json.heygenVideoId}` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.HEYGEN_API_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n01-http-heygen-status",
+      "name": "HeyGen Verifica Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3040, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond01",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "completed",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n01-if-ready",
+      "name": "Video Pronto",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [3320, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ `https://pipeline.tudomudou.com.br/api/items/${$('Set HeyGen ID').item.json.itemId}` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.PIPELINE_SERVICE_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ videoUrl: $json.data.video_url, previewUrl: $json.data.thumbnail_url, durationSeconds: Math.round($json.data.duration ?? 60), markReadyForFinal: true }) }}",
+        "options": {}
+      },
+      "id": "n01-http-video-pronto",
+      "name": "Pipeline Video Pronto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3600, 180],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WHATSAPP_API_URL }}/message/sendText/{{ $env.WHATSAPP_INSTANCE }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.WHATSAPP_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $('Set HeyGen ID').item.json.clientPhone, text: '🎬 *Seu video esta pronto para aprovacao!*\\n\\n📌 *' + $('Set HeyGen ID').item.json.itemTitle + '*\\n\\nAssista ao preview e aprove ou solicite ajustes no link abaixo:\\n\\n👉 https://pipeline.tudomudou.com.br\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "options": {}
+      },
+      "id": "n01-http-wa-notifica",
+      "name": "WA Notifica Aprovacao",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3880, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, itemId: $('Set HeyGen ID').item.json.itemId }) }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "n01-respond",
+      "name": "Responde Intake",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [4160, 180]
+    }
+  ],
+  "connections": {
+    "Webhook Intake": {
+      "main": [[{ "node": "Set Normaliza", "type": "main", "index": 0 }]]
+    },
+    "Set Normaliza": {
+      "main": [[{ "node": "Pipeline Cria Item", "type": "main", "index": 0 }]]
+    },
+    "Pipeline Cria Item": {
+      "main": [[{ "node": "Set Item ID", "type": "main", "index": 0 }]]
+    },
+    "Set Item ID": {
+      "main": [[{ "node": "Claude Gera Roteiro", "type": "main", "index": 0 }]]
+    },
+    "Claude Gera Roteiro": {
+      "main": [[{ "node": "Set Extrai Roteiro", "type": "main", "index": 0 }]]
+    },
+    "Set Extrai Roteiro": {
+      "main": [[{ "node": "Pipeline Salva Roteiro", "type": "main", "index": 0 }]]
+    },
+    "Pipeline Salva Roteiro": {
+      "main": [[{ "node": "HeyGen Submete Video", "type": "main", "index": 0 }]]
+    },
+    "HeyGen Submete Video": {
+      "main": [[{ "node": "Set HeyGen ID", "type": "main", "index": 0 }]]
+    },
+    "Set HeyGen ID": {
+      "main": [[{ "node": "Aguarda 5min", "type": "main", "index": 0 }]]
+    },
+    "Aguarda 5min": {
+      "main": [[{ "node": "HeyGen Verifica Status", "type": "main", "index": 0 }]]
+    },
+    "HeyGen Verifica Status": {
+      "main": [[{ "node": "Video Pronto", "type": "main", "index": 0 }]]
+    },
+    "Video Pronto": {
+      "main": [
+        [{ "node": "Pipeline Video Pronto", "type": "main", "index": 0 }],
+        [{ "node": "Aguarda 5min", "type": "main", "index": 0 }]
+      ]
+    },
+    "Pipeline Video Pronto": {
+      "main": [[{ "node": "WA Notifica Aprovacao", "type": "main", "index": 0 }]]
+    },
+    "WA Notifica Aprovacao": {
+      "main": [[{ "node": "Responde Intake", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "_comment": "VARIAVEIS DE AMBIENTE necessarias no n8n: PIPELINE_SERVICE_API_KEY, ANTHROPIC_API_KEY, HEYGEN_API_KEY, HEYGEN_AVATAR_ID, HEYGEN_VOICE_ID, WHATSAPP_API_URL, WHATSAPP_API_KEY, WHATSAPP_INSTANCE, CLIENT_WHATSAPP_NUMBER"
+}

@@ -1,0 +1,257 @@
+{
+  "name": "02 — Esteira de Eventos Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pipeline-eventos",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "n02-wh-eventos",
+      "name": "Webhook Eventos Pipeline",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "pipeline-eventos-wh",
+      "_comment": "Configure OUTBOUND_WEBHOOK_URL no Coolify com a URL deste webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verifica assinatura HMAC sha256 se OUTBOUND_WEBHOOK_SECRET estiver configurado\nconst item = $input.first();\nconst secret = $env.OUTBOUND_WEBHOOK_SECRET ?? '';\nconst sig = item.json.headers?.['x-signature'] ?? '';\n\nif (secret && sig) {\n  const crypto = require('crypto');\n  const body = JSON.stringify(item.json.body);\n  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex');\n  if (sig !== expected) {\n    throw new Error('Assinatura invalida — possivel requisicao nao autorizada');\n  }\n}\n\nreturn $input.all();"
+      },
+      "id": "n02-code-verify",
+      "name": "Verifica Assinatura",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "e01", "name": "event", "value": "={{ $json.body.event }}", "type": "string" },
+            { "id": "e02", "name": "itemId", "value": "={{ $json.body.item.id }}", "type": "string" },
+            { "id": "e03", "name": "itemTitle", "value": "={{ $json.body.item.title }}", "type": "string" },
+            { "id": "e04", "name": "itemStage", "value": "={{ $json.body.item.stage }}", "type": "string" },
+            { "id": "e05", "name": "videoUrl", "value": "={{ $json.body.item.videoUrl ?? '' }}", "type": "string" },
+            { "id": "e06", "name": "scheduledFor", "value": "={{ $json.body.item.scheduledFor ?? '' }}", "type": "string" },
+            { "id": "e07", "name": "clientPhone", "value": "={{ $json.body.item.client?.phone ?? $env.CLIENT_WHATSAPP_NUMBER }}", "type": "string" },
+            { "id": "e08", "name": "sentAt", "value": "={{ $json.body.sentAt }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n02-set-event",
+      "name": "Set Extrai Evento",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [{ "id": "s01", "leftValue": "={{ $json.event }}", "rightValue": "item.final_approved", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "final_approved"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [{ "id": "s02", "leftValue": "={{ $json.event }}", "rightValue": "item.changes_requested", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "changes_requested"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [{ "id": "s03", "leftValue": "={{ $json.event }}", "rightValue": "item.scheduled", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "scheduled"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [{ "id": "s04", "leftValue": "={{ $json.event }}", "rightValue": "item.published", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "published"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n02-switch-event",
+      "name": "Switch Tipo Evento",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1080, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WHATSAPP_API_URL }}/message/sendText/{{ $env.WHATSAPP_INSTANCE }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.WHATSAPP_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.clientPhone, text: '✅ *Video APROVADO!*\\n\\n📌 *' + $json.itemTitle + '*\\n\\nParabens! Seu video foi aprovado e sera agendado para publicacao em breve.\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "options": {}
+      },
+      "id": "n02-wa-aprovado",
+      "name": "WA Aprovacao Final",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1360, 60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WHATSAPP_API_URL }}/message/sendText/{{ $env.WHATSAPP_INSTANCE }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.WHATSAPP_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.clientPhone, text: '🔄 *Ajuste solicitado — recebemos!*\\n\\n📌 *' + $json.itemTitle + '*\\n\\nSua solicitacao de ajuste foi registrada. Nossa equipe ira revisar e enviar uma nova versao em breve.\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "options": {}
+      },
+      "id": "n02-wa-ajuste",
+      "name": "WA Ajuste Solicitado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1360, 220]
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $json.scheduledFor }}"
+      },
+      "id": "n02-wait-schedule",
+      "name": "Aguarda Agendamento",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1360, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `https://pipeline.tudomudou.com.br/api/items/${$json.itemId}/publish` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.PIPELINE_SERVICE_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ publishedAt: new Date().toISOString(), actorName: 'n8n — Publicacao Automatica' }) }}",
+        "options": {}
+      },
+      "id": "n02-http-publish",
+      "name": "Pipeline Publica",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1640, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WHATSAPP_API_URL }}/message/sendText/{{ $env.WHATSAPP_INSTANCE }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.WHATSAPP_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $('Set Extrai Evento').item.json.clientPhone, text: '🚀 *Video PUBLICADO com sucesso!*\\n\\n📌 *' + $('Set Extrai Evento').item.json.itemTitle + '*\\n\\nSeu conteudo ja esta no ar! 🎉\\n\\nObrigado pela confianca.\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "options": {}
+      },
+      "id": "n02-wa-publicado-scheduled",
+      "name": "WA Publicado Agendado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WHATSAPP_API_URL }}/message/sendText/{{ $env.WHATSAPP_INSTANCE }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.WHATSAPP_API_KEY }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.clientPhone, text: '🚀 *Video PUBLICADO!*\\n\\n📌 *' + $json.itemTitle + '*\\n\\nSeu conteudo ja esta no ar! 🎉\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "options": {}
+      },
+      "id": "n02-wa-publicado-direct",
+      "name": "WA Publicado Direto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1360, 540]
+    }
+  ],
+  "connections": {
+    "Webhook Eventos Pipeline": {
+      "main": [[{ "node": "Verifica Assinatura", "type": "main", "index": 0 }]]
+    },
+    "Verifica Assinatura": {
+      "main": [[{ "node": "Set Extrai Evento", "type": "main", "index": 0 }]]
+    },
+    "Set Extrai Evento": {
+      "main": [[{ "node": "Switch Tipo Evento", "type": "main", "index": 0 }]]
+    },
+    "Switch Tipo Evento": {
+      "main": [
+        [{ "node": "WA Aprovacao Final", "type": "main", "index": 0 }],
+        [{ "node": "WA Ajuste Solicitado", "type": "main", "index": 0 }],
+        [{ "node": "Aguarda Agendamento", "type": "main", "index": 0 }],
+        [{ "node": "WA Publicado Direto", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aguarda Agendamento": {
+      "main": [[{ "node": "Pipeline Publica", "type": "main", "index": 0 }]]
+    },
+    "Pipeline Publica": {
+      "main": [[{ "node": "WA Publicado Agendado", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "_comment": "VARIAVEIS DE AMBIENTE necessarias no n8n: PIPELINE_SERVICE_API_KEY, OUTBOUND_WEBHOOK_SECRET (opcional), WHATSAPP_API_URL, WHATSAPP_API_KEY, WHATSAPP_INSTANCE, CLIENT_WHATSAPP_NUMBER. Configure OUTBOUND_WEBHOOK_URL no Coolify com a URL do Webhook deste workflow."
+}
