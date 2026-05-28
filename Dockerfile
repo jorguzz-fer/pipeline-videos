@@ -4,6 +4,8 @@ RUN apk add --no-cache openssl
 
 FROM base AS deps
 COPY package.json package-lock.json* ./
+# Schema é necessário aqui porque o postinstall roda `prisma generate`.
+COPY prisma ./prisma
 RUN npm ci || npm install
 
 FROM base AS builder
