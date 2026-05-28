@@ -1,0 +1,326 @@
+{
+  "name": "00 — WhatsApp Intake GrowthMinds",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-growthminds",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "n00-wh-wa",
+      "name": "Webhook WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "whatsapp-growthminds-wh",
+      "_instrucoes": "Cole esta URL como Webhook URL na sua instancia Evolution API"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg01",
+              "name": "DR_KLEBER_PHONE",
+              "value": "5511999999999",
+              "type": "string"
+            },
+            {
+              "id": "cfg02",
+              "name": "PIPELINE_INTAKE_URL",
+              "value": "https://SEU-N8N.com/webhook/intake-growthminds",
+              "type": "string"
+            },
+            {
+              "id": "cfg03",
+              "name": "WHATSAPP_BASE_URL",
+              "value": "https://sua-evolution-api.com",
+              "type": "string"
+            },
+            {
+              "id": "cfg04",
+              "name": "WHATSAPP_INSTANCE",
+              "value": "sua-instancia",
+              "type": "string"
+            },
+            {
+              "id": "cfg05",
+              "name": "NETWORKS_PADRAO",
+              "value": "={{ ['INSTAGRAM', 'YOUTUBE'] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n00-config",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [520, 300],
+      "_instrucoes": "EDITE: DR_KLEBER_PHONE com o numero real, PIPELINE_INTAKE_URL com a URL de producao do Webhook Intake do Workflow 01"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "c01",
+              "leftValue": "={{ $('Webhook WhatsApp').item.json.body.event }}",
+              "rightValue": "messages.upsert",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "id": "c02",
+              "leftValue": "={{ !!($('Webhook WhatsApp').item.json.body.data?.message?.conversation || $('Webhook WhatsApp').item.json.body.data?.message?.extendedTextMessage?.text) }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            },
+            {
+              "id": "c03",
+              "leftValue": "={{ $('Webhook WhatsApp').item.json.body.data?.key?.fromMe }}",
+              "rightValue": false,
+              "operator": { "type": "boolean", "operation": "false" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n00-if-mensagem",
+      "name": "IF E Mensagem de Texto",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d01",
+              "name": "senderPhone",
+              "value": "={{ $('Webhook WhatsApp').item.json.body.data.key.remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '') }}",
+              "type": "string"
+            },
+            {
+              "id": "d02",
+              "name": "senderName",
+              "value": "={{ $('Webhook WhatsApp').item.json.body.data.pushName ?? 'Desconhecido' }}",
+              "type": "string"
+            },
+            {
+              "id": "d03",
+              "name": "messageText",
+              "value": "={{ $('Webhook WhatsApp').item.json.body.data.message.conversation ?? $('Webhook WhatsApp').item.json.body.data.message.extendedTextMessage?.text ?? '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n00-set-dados",
+      "name": "Set Extrai Dados WA",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1080, 180]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "c04",
+              "leftValue": "={{ $json.senderPhone }}",
+              "rightValue": "={{ $('Config').item.json.DR_KLEBER_PHONE }}",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n00-if-kleber",
+      "name": "IF E o Dr. Kleber",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1360, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "anthropic-version", "value": "2023-06-01" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-opus-4-7', max_tokens: 500, messages: [{ role: 'user', content: 'Voce e um assistente que interpreta pedidos de video do Dr. Kleber Melo (GrowthMinds) recebidos via WhatsApp e os converte em JSON estruturado.\\n\\nMensagem recebida:\\n\"' + $json.messageText + '\"\\n\\nAnalise a mensagem e retorne APENAS um JSON valido (sem markdown, sem explicacoes) no formato:\\n{\\n  \"valido\": true/false,\\n  \"title\": \"titulo curto do video (max 80 chars)\",\\n  \"briefing\": \"descricao detalhada do tema para o roteirista\",\\n  \"networks\": [\"INSTAGRAM\", \"YOUTUBE\"],\\n  \"infoFaltando\": \"descreva o que falta se valido=false, senao string vazia\"\\n}\\n\\nSe a mensagem nao tiver informacao suficiente para criar um video (ex: mensagem de saudacao, pedido muito vago sem tema), defina valido=false e descreva o que falta em infoFaltando.' }] }) }}",
+        "options": {}
+      },
+      "id": "n00-claude-interpreta",
+      "name": "Claude Interpreta Pedido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1640, 180],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred-anthropic",
+          "name": "Anthropic API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst raw = item.json.content[0].text.trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (e) {\n  // fallback se Claude retornou markdown com ```json\n  const match = raw.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  parsed = match ? JSON.parse(match[1].trim()) : { valido: false, infoFaltando: 'Erro ao interpretar resposta da IA' };\n}\n\nreturn [{ json: {\n  valido: parsed.valido ?? false,\n  title: parsed.title ?? '',\n  briefing: parsed.briefing ?? '',\n  networks: parsed.networks ?? ['INSTAGRAM', 'YOUTUBE'],\n  infoFaltando: parsed.infoFaltando ?? '',\n  senderPhone: $('Set Extrai Dados WA').item.json.senderPhone,\n  senderName: $('Set Extrai Dados WA').item.json.senderName,\n  messageText: $('Set Extrai Dados WA').item.json.messageText\n}}];"
+      },
+      "id": "n00-code-parse",
+      "name": "Code Parse JSON Claude",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1920, 180]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "c05",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n00-if-valido",
+      "name": "IF Pedido Valido",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2200, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').item.json.PIPELINE_INTAKE_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json.title, briefing: $json.briefing, networks: $json.networks, clientName: 'GrowthMinds — Dr. Kleber', clientContactName: 'Dr. Kleber', source: 'HEYGEN', clientPhone: $json.senderPhone, externalRef: 'wa-' + Date.now() }) }}",
+        "options": {}
+      },
+      "id": "n00-http-intake",
+      "name": "HTTP Dispara Workflow 01",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2480, 80]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `${$('Config').item.json.WHATSAPP_BASE_URL}/message/sendText/${$('Config').item.json.WHATSAPP_INSTANCE}` }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $('Code Parse JSON Claude').item.json.senderPhone, text: '✅ *Pedido recebido, Dr. Kleber!*\\n\\n📌 *' + $('Code Parse JSON Claude').item.json.title + '*\\n\\nJa estou gerando o roteiro com a IA e logo em seguida o video no HeyGen.\\n\\nVoce sera notificado assim que estiver pronto para aprovacao. ⏱️' }) }}",
+        "options": {}
+      },
+      "id": "n00-wa-confirma",
+      "name": "WA Confirma Recebimento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2760, 80],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred-whatsapp",
+          "name": "WhatsApp Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `${$('Config').item.json.WHATSAPP_BASE_URL}/message/sendText/${$('Config').item.json.WHATSAPP_INSTANCE}` }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.senderPhone, text: '🤔 Preciso de um pouco mais de informacao para criar o video:\\n\\n' + $json.infoFaltando + '\\n\\nPode me dar mais detalhes?' }) }}",
+        "options": {}
+      },
+      "id": "n00-wa-pede-info",
+      "name": "WA Pede Mais Informacao",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2480, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred-whatsapp",
+          "name": "WhatsApp Evolution API Key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp": {
+      "main": [[{ "node": "Config", "type": "main", "index": 0 }]]
+    },
+    "Config": {
+      "main": [[{ "node": "IF E Mensagem de Texto", "type": "main", "index": 0 }]]
+    },
+    "IF E Mensagem de Texto": {
+      "main": [
+        [{ "node": "Set Extrai Dados WA", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Set Extrai Dados WA": {
+      "main": [[{ "node": "IF E o Dr. Kleber", "type": "main", "index": 0 }]]
+    },
+    "IF E o Dr. Kleber": {
+      "main": [
+        [{ "node": "Claude Interpreta Pedido", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Claude Interpreta Pedido": {
+      "main": [[{ "node": "Code Parse JSON Claude", "type": "main", "index": 0 }]]
+    },
+    "Code Parse JSON Claude": {
+      "main": [[{ "node": "IF Pedido Valido", "type": "main", "index": 0 }]]
+    },
+    "IF Pedido Valido": {
+      "main": [
+        [{ "node": "HTTP Dispara Workflow 01", "type": "main", "index": 0 }],
+        [{ "node": "WA Pede Mais Informacao", "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP Dispara Workflow 01": {
+      "main": [[{ "node": "WA Confirma Recebimento", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
