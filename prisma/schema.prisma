@@ -1,0 +1,162 @@
+// Camada de saída desacoplada — Esteira de conteúdo (Tudo Mudou).
+// O modelo NÃO sabe de onde o conteúdo veio (HeyGen, OpusClip, manual).
+// Recebe um "item de conteúdo" genérico e registra todo o ciclo de aprovação.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Quem opera a ferramenta: cliente (Dr. Kleber), dono (Fernando) e time.
+enum Role {
+  CLIENT
+  OWNER
+  TEAM
+}
+
+// Origem do item — marca a "entrada" plugada na camada de saída.
+enum Source {
+  HEYGEN
+  OPUSCLIP
+  MANUAL
+}
+
+// Redes de publicação.
+enum Platform {
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+  LINKEDIN
+}
+
+// Estados do item (máquina de estados da camada de saída).
+// EM_PRODUCAO é a janela entre o roteiro aprovado e o vídeo pronto
+// (HeyGen renderizando de forma assíncrona).
+enum Stage {
+  AGUARDANDO_ROTEIRO
+  EM_PRODUCAO
+  AGUARDANDO_FINAL
+  AJUSTE_PEDIDO
+  APROVADO
+  AGENDADO
+  PUBLICADO
+}
+
+// Portão de aprovação ao qual uma decisão se refere.
+enum Gate {
+  SCRIPT
+  FINAL
+}
+
+enum Decision {
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+// Canal por onde a decisão chegou.
+enum Channel {
+  SCREEN
+  WHATSAPP
+}
+
+model User {
+  id           String          @id @default(cuid())
+  name         String
+  email        String          @unique
+  passwordHash String
+  role         Role            @default(TEAM)
+  phone        String? // usado para casar aprovações vindas do WhatsApp
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  decisions    ApprovalEvent[]
+}
+
+// Cliente da carteira (ex.: GrowthMinds / Dr. Kleber).
+model Client {
+  id          String        @id @default(cuid())
+  name        String // "GrowthMinds"
+  contactName String // "Dr. Kleber"
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  items       ContentItem[]
+}
+
+// Unidade genérica de conteúdo. Núcleo compartilhado da camada de saída.
+model ContentItem {
+  id       String @id @default(cuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  title  String
+  script String  @db.Text // roteiro (45–60s)
+  source Source  @default(HEYGEN)
+  stage  Stage   @default(AGUARDANDO_ROTEIRO)
+
+  networks Platform[] // redes-alvo (chips do card)
+
+  // Preenchido pela origem quando o vídeo fica pronto (webhook do HeyGen via n8n).
+  previewUrl      String?
+  thumbnailUrl    String?
+  videoUrl        String?
+  durationSeconds Int?
+
+  // Correlação com a origem (ex.: id do vídeo no HeyGen).
+  externalRef String?
+
+  scheduledFor DateTime?
+  publishedAt  DateTime?
+
+  // Momento em que entrou no estágio atual (para "aguardando há X").
+  stageChangedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  variants ContentVariant[]
+  events   ApprovalEvent[]
+
+  @@index([stage])
+  @@index([clientId])
+}
+
+// Texto por rede (caption + hook + hashtags) gerado pelo Claude.
+model ContentVariant {
+  id            String      @id @default(cuid())
+  contentItemId String
+  contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  platform      Platform
+  caption       String      @db.Text
+  hook          String?
+  hashtags      String[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([contentItemId, platform])
+}
+
+// Trilha de auditoria: quem decidiu, em qual portão, por qual canal, quando.
+model ApprovalEvent {
+  id            String      @id @default(cuid())
+  contentItemId String
+  contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  gate     Gate
+  decision Decision
+  channel  Channel  @default(SCREEN)
+
+  // Ator: usuário logado (tela) OU nome denormalizado (aprovação via WhatsApp/serviço).
+  actorUserId String?
+  actor       User?   @relation(fields: [actorUserId], references: [id])
+  actorName   String
+
+  comment    String? @db.Text // pedido de ajuste, observação
+  isFallback Boolean @default(false) // aprovado por owner/time no lugar do cliente
+
+  createdAt DateTime @default(now())
+
+  @@index([contentItemId])
+}
