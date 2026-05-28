@@ -14,7 +14,7 @@
       "typeVersion": 2,
       "position": [240, 300],
       "webhookId": "whatsapp-growthminds-wh",
-      "_instrucoes": "Cole esta URL como Webhook URL na sua instancia Evolution API"
+      "_instrucoes": "Cole esta URL no painel Z-API > Webhooks e configuracoes gerais > 'Ao receber' (on-message-received)"
     },
     {
       "parameters": {
@@ -34,14 +34,14 @@
             },
             {
               "id": "cfg03",
-              "name": "WHATSAPP_BASE_URL",
-              "value": "https://sua-evolution-api.com",
+              "name": "ZAPI_INSTANCE_ID",
+              "value": "3EAC256801B351AD2F626EDB289F0F12",
               "type": "string"
             },
             {
               "id": "cfg04",
-              "name": "WHATSAPP_INSTANCE",
-              "value": "sua-instancia",
+              "name": "ZAPI_TOKEN",
+              "value": "7E5C33ACE43C314C9CA401D1",
               "type": "string"
             },
             {
@@ -68,19 +68,25 @@
           "conditions": [
             {
               "id": "c01",
-              "leftValue": "={{ $('Webhook WhatsApp').item.json.body.event }}",
-              "rightValue": "messages.upsert",
+              "leftValue": "={{ $('Webhook WhatsApp').item.json.body.type }}",
+              "rightValue": "ReceivedCallback",
               "operator": { "type": "string", "operation": "equals" }
             },
             {
               "id": "c02",
-              "leftValue": "={{ !!($('Webhook WhatsApp').item.json.body.data?.message?.conversation || $('Webhook WhatsApp').item.json.body.data?.message?.extendedTextMessage?.text) }}",
+              "leftValue": "={{ !!$('Webhook WhatsApp').item.json.body.text?.message }}",
               "rightValue": true,
               "operator": { "type": "boolean", "operation": "true" }
             },
             {
               "id": "c03",
-              "leftValue": "={{ $('Webhook WhatsApp').item.json.body.data?.key?.fromMe }}",
+              "leftValue": "={{ $('Webhook WhatsApp').item.json.body.fromMe }}",
+              "rightValue": false,
+              "operator": { "type": "boolean", "operation": "false" }
+            },
+            {
+              "id": "c06",
+              "leftValue": "={{ $('Webhook WhatsApp').item.json.body.isGroup }}",
               "rightValue": false,
               "operator": { "type": "boolean", "operation": "false" }
             }
@@ -102,19 +108,19 @@
             {
               "id": "d01",
               "name": "senderPhone",
-              "value": "={{ $('Webhook WhatsApp').item.json.body.data.key.remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '') }}",
+              "value": "={{ $('Webhook WhatsApp').item.json.body.phone }}",
               "type": "string"
             },
             {
               "id": "d02",
               "name": "senderName",
-              "value": "={{ $('Webhook WhatsApp').item.json.body.data.pushName ?? 'Desconhecido' }}",
+              "value": "={{ $('Webhook WhatsApp').item.json.body.senderName ?? $('Webhook WhatsApp').item.json.body.chatName ?? 'Desconhecido' }}",
               "type": "string"
             },
             {
               "id": "d03",
               "name": "messageText",
-              "value": "={{ $('Webhook WhatsApp').item.json.body.data.message.conversation ?? $('Webhook WhatsApp').item.json.body.data.message.extendedTextMessage?.text ?? '' }}",
+              "value": "={{ $('Webhook WhatsApp').item.json.body.text.message ?? '' }}",
               "type": "string"
             }
           ]
@@ -234,12 +240,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ `${$('Config').item.json.WHATSAPP_BASE_URL}/message/sendText/${$('Config').item.json.WHATSAPP_INSTANCE}` }}",
+        "url": "={{ `https://api.z-api.io/instances/${$('Config').item.json.ZAPI_INSTANCE_ID}/token/${$('Config').item.json.ZAPI_TOKEN}/send-text` }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $('Code Parse JSON Claude').item.json.senderPhone, text: '✅ *Pedido recebido, Dr. Kleber!*\\n\\n📌 *' + $('Code Parse JSON Claude').item.json.title + '*\\n\\nJa estou gerando o roteiro com a IA e logo em seguida o video no HeyGen.\\n\\nVoce sera notificado assim que estiver pronto para aprovacao. ⏱️' }) }}",
+        "jsonBody": "={{ JSON.stringify({ phone: $('Code Parse JSON Claude').item.json.senderPhone, message: '✅ *Pedido recebido, Dr. Kleber!*\\n\\n📌 *' + $('Code Parse JSON Claude').item.json.title + '*\\n\\nJa estou gerando o roteiro com a IA e logo em seguida o video no HeyGen.\\n\\nVoce sera notificado assim que estiver pronto para aprovacao. ⏱️' }) }}",
         "options": {}
       },
       "id": "n00-wa-confirma",
@@ -249,20 +255,20 @@
       "position": [2760, 80],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "cred-whatsapp",
-          "name": "WhatsApp Evolution API Key"
+          "id": "cred-zapi",
+          "name": "Z-API Client Token"
         }
       }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ `${$('Config').item.json.WHATSAPP_BASE_URL}/message/sendText/${$('Config').item.json.WHATSAPP_INSTANCE}` }}",
+        "url": "={{ `https://api.z-api.io/instances/${$('Config').item.json.ZAPI_INSTANCE_ID}/token/${$('Config').item.json.ZAPI_TOKEN}/send-text` }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $json.senderPhone, text: '🤔 Preciso de um pouco mais de informacao para criar o video:\\n\\n' + $json.infoFaltando + '\\n\\nPode me dar mais detalhes?' }) }}",
+        "jsonBody": "={{ JSON.stringify({ phone: $json.senderPhone, message: '🤔 Preciso de um pouco mais de informacao para criar o video:\\n\\n' + $json.infoFaltando + '\\n\\nPode me dar mais detalhes?' }) }}",
         "options": {}
       },
       "id": "n00-wa-pede-info",
@@ -272,8 +278,8 @@
       "position": [2480, 300],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "cred-whatsapp",
-          "name": "WhatsApp Evolution API Key"
+          "id": "cred-zapi",
+          "name": "Z-API Client Token"
         }
       }
     }

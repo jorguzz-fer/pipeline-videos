@@ -21,14 +21,14 @@
           "assignments": [
             {
               "id": "cfg01",
-              "name": "WHATSAPP_BASE_URL",
-              "value": "https://sua-evolution-api.com",
+              "name": "ZAPI_INSTANCE_ID",
+              "value": "3EAC256801B351AD2F626EDB289F0F12",
               "type": "string"
             },
             {
               "id": "cfg02",
-              "name": "WHATSAPP_INSTANCE",
-              "value": "sua-instancia",
+              "name": "ZAPI_TOKEN",
+              "value": "7E5C33ACE43C314C9CA401D1",
               "type": "string"
             },
             {
@@ -145,12 +145,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ `${$('Config').item.json.WHATSAPP_BASE_URL}/message/sendText/${$('Config').item.json.WHATSAPP_INSTANCE}` }}",
+        "url": "={{ `https://api.z-api.io/instances/${$('Config').item.json.ZAPI_INSTANCE_ID}/token/${$('Config').item.json.ZAPI_TOKEN}/send-text` }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $json.clientPhone, text: '✅ *Video APROVADO!*\\n\\n📌 *' + $json.itemTitle + '*\\n\\nParabens! Seu video foi aprovado e sera agendado para publicacao em breve.\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "jsonBody": "={{ JSON.stringify({ phone:$json.clientPhone, message: '✅ *Video APROVADO!*\\n\\n📌 *' + $json.itemTitle + '*\\n\\nParabens! Seu video foi aprovado e sera agendado para publicacao em breve.\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
         "options": {}
       },
       "id": "n02-wa-aprovado",
@@ -160,20 +160,20 @@
       "position": [1640, 60],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "cred-whatsapp",
-          "name": "WhatsApp Evolution API Key"
+          "id": "cred-zapi",
+          "name": "Z-API Client Token"
         }
       }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ `${$('Config').item.json.WHATSAPP_BASE_URL}/message/sendText/${$('Config').item.json.WHATSAPP_INSTANCE}` }}",
+        "url": "={{ `https://api.z-api.io/instances/${$('Config').item.json.ZAPI_INSTANCE_ID}/token/${$('Config').item.json.ZAPI_TOKEN}/send-text` }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $json.clientPhone, text: '🔄 *Ajuste solicitado — recebemos!*\\n\\n📌 *' + $json.itemTitle + '*\\n\\nSua solicitacao de ajuste foi registrada. Nossa equipe ira revisar e enviar uma nova versao em breve.\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "jsonBody": "={{ JSON.stringify({ phone:$json.clientPhone, message: '🔄 *Ajuste solicitado — recebemos!*\\n\\n📌 *' + $json.itemTitle + '*\\n\\nSua solicitacao de ajuste foi registrada. Nossa equipe ira revisar e enviar uma nova versao em breve.\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
         "options": {}
       },
       "id": "n02-wa-ajuste",
@@ -183,8 +183,8 @@
       "position": [1640, 220],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "cred-whatsapp",
-          "name": "WhatsApp Evolution API Key"
+          "id": "cred-zapi",
+          "name": "Z-API Client Token"
         }
       }
     },
@@ -225,12 +225,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ `${$('Config').item.json.WHATSAPP_BASE_URL}/message/sendText/${$('Config').item.json.WHATSAPP_INSTANCE}` }}",
+        "url": "={{ `https://api.z-api.io/instances/${$('Config').item.json.ZAPI_INSTANCE_ID}/token/${$('Config').item.json.ZAPI_TOKEN}/send-text` }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $('Set Extrai Evento').item.json.clientPhone, text: '🚀 *Video PUBLICADO com sucesso!*\\n\\n📌 *' + $('Set Extrai Evento').item.json.itemTitle + '*\\n\\nSeu conteudo ja esta no ar! 🎉\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "jsonBody": "={{ JSON.stringify({ phone:$('Set Extrai Evento').item.json.clientPhone, message: '🚀 *Video PUBLICADO com sucesso!*\\n\\n📌 *' + $('Set Extrai Evento').item.json.itemTitle + '*\\n\\nSeu conteudo ja esta no ar! 🎉\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
         "options": {}
       },
       "id": "n02-wa-publicado-agendado",
@@ -240,20 +240,20 @@
       "position": [2200, 380],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "cred-whatsapp",
-          "name": "WhatsApp Evolution API Key"
+          "id": "cred-zapi",
+          "name": "Z-API Client Token"
         }
       }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ `${$('Config').item.json.WHATSAPP_BASE_URL}/message/sendText/${$('Config').item.json.WHATSAPP_INSTANCE}` }}",
+        "url": "={{ `https://api.z-api.io/instances/${$('Config').item.json.ZAPI_INSTANCE_ID}/token/${$('Config').item.json.ZAPI_TOKEN}/send-text` }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $json.clientPhone, text: '🚀 *Video PUBLICADO!*\\n\\n📌 *' + $json.itemTitle + '*\\n\\nSeu conteudo ja esta no ar! 🎉\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "jsonBody": "={{ JSON.stringify({ phone:$json.clientPhone, message: '🚀 *Video PUBLICADO!*\\n\\n📌 *' + $json.itemTitle + '*\\n\\nSeu conteudo ja esta no ar! 🎉\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
         "options": {}
       },
       "id": "n02-wa-publicado-direto",
@@ -263,8 +263,8 @@
       "position": [1640, 540],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "cred-whatsapp",
-          "name": "WhatsApp Evolution API Key"
+          "id": "cred-zapi",
+          "name": "Z-API Client Token"
         }
       }
     }

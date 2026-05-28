@@ -33,14 +33,14 @@
             },
             {
               "id": "cfg03",
-              "name": "WHATSAPP_BASE_URL",
-              "value": "https://sua-evolution-api.com",
+              "name": "ZAPI_INSTANCE_ID",
+              "value": "3EAC256801B351AD2F626EDB289F0F12",
               "type": "string"
             },
             {
               "id": "cfg04",
-              "name": "WHATSAPP_INSTANCE",
-              "value": "sua-instancia",
+              "name": "ZAPI_TOKEN",
+              "value": "7E5C33ACE43C314C9CA401D1",
               "type": "string"
             },
             {
@@ -375,12 +375,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ `${$('Config').item.json.WHATSAPP_BASE_URL}/message/sendText/${$('Config').item.json.WHATSAPP_INSTANCE}` }}",
+        "url": "={{ `https://api.z-api.io/instances/${$('Config').item.json.ZAPI_INSTANCE_ID}/token/${$('Config').item.json.ZAPI_TOKEN}/send-text` }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $('Set HeyGen ID').item.json.clientPhone, text: '🎬 *Seu video esta pronto para aprovacao!*\\n\\n📌 *' + $('Set HeyGen ID').item.json.itemTitle + '*\\n\\nAssista ao preview e aprove ou solicite ajustes:\\n\\n👉 https://pipeline.tudomudou.com.br\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "jsonBody": "={{ JSON.stringify({ phone: $('Set HeyGen ID').item.json.clientPhone, message: '🎬 *Seu video esta pronto para aprovacao!*\\n\\n📌 *' + $('Set HeyGen ID').item.json.itemTitle + '*\\n\\nAssista ao preview e aprove ou solicite ajustes:\\n\\n👉 https://pipeline.tudomudou.com.br\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
         "options": {}
       },
       "id": "n01-http-wa-notifica",
@@ -390,8 +390,8 @@
       "position": [4160, 180],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "cred-whatsapp",
-          "name": "WhatsApp Evolution API Key"
+          "id": "cred-zapi",
+          "name": "Z-API Client Token"
         }
       }
     },
