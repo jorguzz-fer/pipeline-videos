@@ -10,7 +10,7 @@ export const createItemSchema = z
     clientName: z.string().min(1).optional(),
     clientContactName: z.string().min(1).optional(),
     title: z.string().min(1).max(300),
-    script: z.string().min(1),
+    script: z.string().optional(),
     source: z.nativeEnum(Source).optional(),
     networks: z.array(platform).min(1),
     externalRef: z.string().optional(),

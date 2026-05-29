@@ -62,7 +62,7 @@ export async function createItem(input: z.infer<typeof createItemSchema>) {
     data: {
       clientId,
       title: data.title,
-      script: data.script,
+      script: data.script ?? "",
       source: data.source ?? undefined,
       networks: data.networks,
       externalRef: data.externalRef,
