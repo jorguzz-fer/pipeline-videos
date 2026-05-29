@@ -2,17 +2,14 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { useSearchParams } from "next/navigation";
 import { PasswordInput } from "@/components/PasswordInput";
-import { authenticate, type LoginState } from "./actions";
+import { resetPasswordAction, type ResetState } from "./actions";
 
-export default function LoginPage() {
-  const [state, action, pending] = useActionState<LoginState, FormData>(
-    authenticate,
+export default function ResetPage() {
+  const [state, action, pending] = useActionState<ResetState, FormData>(
+    resetPasswordAction,
     {}
   );
-  const searchParams = useSearchParams();
-  const justReset = searchParams.get("reset") === "ok";
 
   return (
     <div className="login-screen">
@@ -20,27 +17,16 @@ export default function LoginPage() {
         <div className="login-brand">
           <div className="logo">TM</div>
           <div>
-            <h2>Central de Aprovação</h2>
+            <h2>Resetar senha</h2>
             <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>
               Tudo Mudou · Conteúdo
             </span>
           </div>
         </div>
 
-        {justReset ? (
-          <div
-            style={{
-              background: "var(--ok-soft)",
-              color: "var(--ok)",
-              fontSize: 12.5,
-              padding: "9px 12px",
-              borderRadius: "var(--radius-sm)",
-              marginBottom: 4,
-            }}
-          >
-            Senha redefinida. Faça login com a nova senha.
-          </div>
-        ) : null}
+        <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 4 }}>
+          Use o token de reset configurado no servidor.
+        </p>
 
         <label htmlFor="email">E-mail</label>
         <input
@@ -52,29 +38,38 @@ export default function LoginPage() {
           autoFocus
         />
 
-        <label htmlFor="password">Senha</label>
+        <label htmlFor="token">Token de reset</label>
+        <input
+          id="token"
+          name="token"
+          type="text"
+          autoComplete="off"
+          required
+        />
+
+        <label htmlFor="newPassword">Nova senha</label>
         <PasswordInput
-          id="password"
-          name="password"
-          autoComplete="current-password"
+          id="newPassword"
+          name="newPassword"
+          autoComplete="new-password"
         />
 
         {state?.error ? <div className="login-error">{state.error}</div> : null}
 
         <button type="submit" disabled={pending}>
-          {pending ? "Entrando…" : "Entrar"}
+          {pending ? "Resetando…" : "Resetar senha"}
         </button>
 
         <div style={{ marginTop: 14, textAlign: "center" }}>
           <Link
-            href="/login/reset"
+            href="/login"
             style={{
               fontSize: 12.5,
               color: "var(--brand)",
               fontWeight: 500,
             }}
           >
-            Esqueci minha senha
+            ← Voltar para o login
           </Link>
         </div>
       </form>

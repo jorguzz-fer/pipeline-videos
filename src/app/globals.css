@@ -623,6 +623,35 @@ header {
   outline: none;
   border-color: var(--brand);
 }
+.password-wrap {
+  position: relative;
+}
+.password-wrap input {
+  padding-right: 42px;
+}
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 0;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--ink-faint);
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.password-toggle:hover {
+  color: var(--ink-soft);
+  background: var(--canvas);
+}
+.password-toggle svg {
+  width: 18px;
+  height: 18px;
+}
 .login-card button {
   width: 100%;
   margin-top: 20px;
