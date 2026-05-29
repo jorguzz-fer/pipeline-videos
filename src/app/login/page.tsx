@@ -1,18 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PasswordInput } from "@/components/PasswordInput";
 import { authenticate, type LoginState } from "./actions";
+
+function ResetBanner() {
+  const searchParams = useSearchParams();
+  if (searchParams.get("reset") !== "ok") return null;
+  return (
+    <div
+      style={{
+        background: "var(--ok-soft)",
+        color: "var(--ok)",
+        fontSize: 12.5,
+        padding: "9px 12px",
+        borderRadius: "var(--radius-sm)",
+        marginBottom: 4,
+      }}
+    >
+      Senha redefinida. Faça login com a nova senha.
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState<LoginState, FormData>(
     authenticate,
     {}
   );
-  const searchParams = useSearchParams();
-  const justReset = searchParams.get("reset") === "ok";
 
   return (
     <div className="login-screen">
@@ -27,20 +44,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {justReset ? (
-          <div
-            style={{
-              background: "var(--ok-soft)",
-              color: "var(--ok)",
-              fontSize: 12.5,
-              padding: "9px 12px",
-              borderRadius: "var(--radius-sm)",
-              marginBottom: 4,
-            }}
-          >
-            Senha redefinida. Faça login com a nova senha.
-          </div>
-        ) : null}
+        <Suspense fallback={null}>
+          <ResetBanner />
+        </Suspense>
 
         <label htmlFor="email">E-mail</label>
         <input
