@@ -5,7 +5,8 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "intake-growthminds",
-        "responseMode": "lastNode",
+        "responseMode": "onReceived",
+        "responseCode": 200,
         "options": {}
       },
       "id": "n01-wh-intake",
@@ -394,18 +395,6 @@
           "name": "Z-API Client Token"
         }
       }
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ ok: true, itemId: $('Set HeyGen ID').item.json.itemId }) }}",
-        "options": { "responseCode": 200 }
-      },
-      "id": "n01-respond",
-      "name": "Responde Intake",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [4440, 180]
     }
   ],
   "connections": {
@@ -455,7 +444,7 @@
       "main": [[{ "node": "WA Notifica Aprovacao", "type": "main", "index": 0 }]]
     },
     "WA Notifica Aprovacao": {
-      "main": [[{ "node": "Responde Intake", "type": "main", "index": 0 }]]
+      "main": [[]]
     }
   },
   "active": false,
