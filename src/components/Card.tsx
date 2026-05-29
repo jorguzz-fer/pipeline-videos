@@ -8,6 +8,7 @@ import {
   rejectAction,
   publishNowAction,
   scheduleAction,
+  archiveAction,
 } from "@/app/actions";
 import { SubmitButton } from "@/components/SubmitButton";
 
@@ -82,6 +83,17 @@ function ClockIcon() {
     <svg className="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg style={{ width: 13, height: 13 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4h6v2" />
     </svg>
   );
 }
@@ -295,6 +307,13 @@ export default function Card({ item }: { item: ItemVM }) {
           </div>
         </div>
       ) : null}
+
+      <form action={archiveAction}>
+        <input type="hidden" name="id" value={item.id} />
+        <SubmitButton className="btn-archive" pendingLabel="Arquivando…">
+          <TrashIcon /> Arquivar
+        </SubmitButton>
+      </form>
     </div>
   );
 }

@@ -113,6 +113,8 @@ model ContentItem {
   // Momento em que entrou no estágio atual (para "aguardando há X").
   stageChangedAt DateTime @default(now())
 
+  archived  Boolean  @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -121,6 +123,7 @@ model ContentItem {
 
   @@index([stage])
   @@index([clientId])
+  @@index([archived])
 }
 
 // Texto por rede (caption + hook + hashtags) gerado pelo Claude.

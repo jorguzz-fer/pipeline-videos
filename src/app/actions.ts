@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { Gate, Decision, Channel } from "@prisma/client";
 import { auth, signOut } from "@/auth";
-import { recordDecision, publishItem, scheduleItem } from "@/lib/items";
+import { recordDecision, publishItem, scheduleItem, archiveItem } from "@/lib/items";
 
 function parseGate(value: FormDataEntryValue | null): Gate {
   return value === "FINAL" ? Gate.FINAL : Gate.SCRIPT;
@@ -70,6 +70,15 @@ export async function scheduleAction(formData: FormData) {
   if (Number.isNaN(date.getTime())) throw new Error("Data de agendamento inválida.");
 
   await scheduleItem(id, date, actorName);
+  revalidatePath("/");
+}
+
+export async function archiveAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Não autenticado.");
+  const id = String(formData.get("id") ?? "");
+  if (!id) throw new Error("id ausente.");
+  await archiveItem(id);
   revalidatePath("/");
 }
 

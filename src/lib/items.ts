@@ -45,11 +45,19 @@ export function getItem(id: string) {
 export function listItems(opts: { stages?: Stage[]; clientId?: string } = {}) {
   return prisma.contentItem.findMany({
     where: {
+      archived: false,
       ...(opts.stages ? { stage: { in: opts.stages } } : {}),
       ...(opts.clientId ? { clientId: opts.clientId } : {}),
     },
     include: itemInclude,
     orderBy: { stageChangedAt: "asc" },
+  });
+}
+
+export async function archiveItem(id: string) {
+  return prisma.contentItem.update({
+    where: { id },
+    data: { archived: true },
   });
 }
 
