@@ -22,9 +22,9 @@
           "assignments": [
             {
               "id": "cfg01",
-              "name": "HEYGEN_AVATAR_ID",
-              "value": "COLE_SEU_AVATAR_ID_AQUI",
-              "type": "string"
+              "name": "HEYGEN_AVATARS",
+              "value": "={{ ['c698a5b1d4cd4cf29b4cdadfda3cec39','d81612857bba4d6d94357031f9ef3b47','077c7d1d25e0448cada3a09976e22f22','41be6579e79a47a0953e263b03bca277','8b2c5d140efc48fb8f31a06dbcff843d','652aca4e659d4f079dc17c4c9eeffb65','af4d75ad717549268d31edf3b455835b','a69f733daf1245feaa17c772aa754709','b31fa1ccbd1043179d34851e21608213','7a21ae30ef9a41acaa6a2501934915d9','5726e692752e41e88f12bf6f28f7a0ac','34bcf7437b3b4af8bddd7b4dcfbf5539','f4da96d3f31042a6b5fef4a129d457cd','1aea02caffc44d059d90cdf8fe0dca26','7c58bca36bde4c678dae83a4da812baf','ed2e6fa74e14456d860699d3f60485cd','5167eac9d1d24cc29bcbbbf77cc920d8','3777e98b325b481e9c84c0bf87e18acb'] }}",
+              "type": "array"
             },
             {
               "id": "cfg02",
@@ -116,7 +116,7 @@
             {
               "id": "a08",
               "name": "heygenAvatarId",
-              "value": "={{ $('Webhook Intake').item.json.body.heygenAvatarId ?? $('Config').item.json.HEYGEN_AVATAR_ID }}",
+              "value": "={{ $('Webhook Intake').item.json.body.heygenAvatarId ?? $('Config').item.json.HEYGEN_AVATARS[Math.floor(Math.random() * $('Config').item.json.HEYGEN_AVATARS.length)] }}",
               "type": "string"
             },
             {
@@ -264,7 +264,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ video_inputs: [{ character: { type: 'avatar', avatar_id: $('Set Extrai Roteiro').item.json.heygenAvatarId, avatar_style: 'normal' }, voice: { type: 'text', voice_id: $('Set Extrai Roteiro').item.json.heygenVoiceId, input_text: $('Set Extrai Roteiro').item.json.script, speed: 1.0 }, background: { type: 'color', value: '#1a1a2e' } }], aspect_ratio: '9:16', test: false }) }}",
+        "jsonBody": "={{ JSON.stringify({ video_inputs: [{ character: { type: 'avatar', avatar_id: $('Set Extrai Roteiro').item.json.heygenAvatarId, avatar_style: 'normal' }, voice: { type: 'text', voice_id: $('Set Extrai Roteiro').item.json.heygenVoiceId, input_text: $('Set Extrai Roteiro').item.json.script, speed: 1.0 }, background: { type: 'color', value: '#1a1a2e' } }], dimension: { width: 720, height: 1280 }, test: false }) }}",
         "options": {}
       },
       "id": "n01-http-heygen",
