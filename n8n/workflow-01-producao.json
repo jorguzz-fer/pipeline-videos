@@ -168,8 +168,8 @@
       "parameters": {
         "assignments": {
           "assignments": [
-            { "id": "b01", "name": "itemId", "value": "={{ $json.id }}", "type": "string" },
-            { "id": "b02", "name": "itemTitle", "value": "={{ $json.title }}", "type": "string" },
+            { "id": "b01", "name": "itemId", "value": "={{ $json.item.id }}", "type": "string" },
+            { "id": "b02", "name": "itemTitle", "value": "={{ $json.item.title }}", "type": "string" },
             { "id": "b03", "name": "briefing", "value": "={{ $('Set Normaliza').item.json.briefing }}", "type": "string" },
             { "id": "b04", "name": "heygenAvatarId", "value": "={{ $('Set Normaliza').item.json.heygenAvatarId }}", "type": "string" },
             { "id": "b05", "name": "heygenVoiceId", "value": "={{ $('Set Normaliza').item.json.heygenVoiceId }}", "type": "string" },
