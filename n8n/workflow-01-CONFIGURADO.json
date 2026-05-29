@@ -1,0 +1,699 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intake-growthminds",
+        "options": {}
+      },
+      "id": "91bec0ca-02ac-42c4-882a-4528f69b2a80",
+      "name": "Webhook Intake1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -5632,
+        -592
+      ],
+      "webhookId": "intake-growthminds-wh"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg01",
+              "name": "HEYGEN_AVATARS",
+              "value": "={{ ['c698a5b1d4cd4cf29b4cdadfda3cec39','d81612857bba4d6d94357031f9ef3b47','077c7d1d25e0448cada3a09976e22f22','41be6579e79a47a0953e263b03bca277','8b2c5d140efc48fb8f31a06dbcff843d','652aca4e659d4f079dc17c4c9eeffb65','af4d75ad717549268d31edf3b455835b','a69f733daf1245feaa17c772aa754709','b31fa1ccbd1043179d34851e21608213','7a21ae30ef9a41acaa6a2501934915d9','5726e692752e41e88f12bf6f28f7a0ac','34bcf7437b3b4af8bddd7b4dcfbf5539','f4da96d3f31042a6b5fef4a129d457cd','1aea02caffc44d059d90cdf8fe0dca26','7c58bca36bde4c678dae83a4da812baf','ed2e6fa74e14456d860699d3f60485cd','5167eac9d1d24cc29bcbbbf77cc920d8','3777e98b325b481e9c84c0bf87e18acb'] }}",
+              "type": "array"
+            },
+            {
+              "id": "cfg02",
+              "name": "HEYGEN_VOICE_ID",
+              "value": "4051528d5d974c528ee4bb11c96d618a",
+              "type": "string"
+            },
+            {
+              "id": "cfg03",
+              "name": "ZAPI_INSTANCE_ID",
+              "value": "3EAC256801B351AD2F626EDB289F0F12",
+              "type": "string"
+            },
+            {
+              "id": "cfg04",
+              "name": "ZAPI_TOKEN",
+              "value": "7E5C33ACE43C314C9CA401D1",
+              "type": "string"
+            },
+            {
+              "id": "cfg05",
+              "name": "CLIENT_PHONE",
+              "value": "5511989940404",
+              "type": "string"
+            },
+            {
+              "id": "cfg06",
+              "name": "PIPELINE_BASE_URL",
+              "value": "https://pipeline.tudomudou.com.br",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "59716864-cf71-49ea-bf37-e2a693b51430",
+      "name": "Config1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -5344,
+        -592
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a01",
+              "name": "title",
+              "value": "={{ $('Webhook Intake1').item.json.body.title ?? $('Webhook Intake1').item.json.body.assunto ?? ('Video ' + $now.toFormat('yyyy-MM-dd')) }}",
+              "type": "string"
+            },
+            {
+              "id": "a02",
+              "name": "clientName",
+              "value": "GrowthMinds — Dr. Kleber",
+              "type": "string"
+            },
+            {
+              "id": "a03",
+              "name": "clientContactName",
+              "value": "Dr. Kleber",
+              "type": "string"
+            },
+            {
+              "id": "a04",
+              "name": "networks",
+              "value": "={{ $('Webhook Intake1').item.json.body.networks ?? ['INSTAGRAM', 'YOUTUBE'] }}",
+              "type": "array"
+            },
+            {
+              "id": "a05",
+              "name": "source",
+              "value": "HEYGEN",
+              "type": "string"
+            },
+            {
+              "id": "a06",
+              "name": "briefing",
+              "value": "={{ $('Webhook Intake1').item.json.body.briefing ?? $('Webhook Intake1').item.json.body.descricao ?? $('Webhook Intake1').item.json.body.tema ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a07",
+              "name": "externalRef",
+              "value": "={{ $('Webhook Intake1').item.json.body.externalRef ?? $('Webhook Intake1').item.json.body.id ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a08",
+              "name": "heygenAvatarId",
+              "value": "={{ $('Webhook Intake1').item.json.body.heygenAvatarId ?? $('Config1').item.json.HEYGEN_AVATARS[Math.floor(Math.random() * $('Config1').item.json.HEYGEN_AVATARS.length)] }}",
+              "type": "string"
+            },
+            {
+              "id": "a09",
+              "name": "heygenVoiceId",
+              "value": "={{ $('Webhook Intake1').item.json.body.heygenVoiceId ?? $('Config1').item.json.HEYGEN_VOICE_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "a10",
+              "name": "clientPhone",
+              "value": "={{ $('Webhook Intake1').item.json.body.clientPhone ?? $('Config1').item.json.CLIENT_PHONE }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e692f7ad-85cf-471f-9368-e428aaaa794f",
+      "name": "Set Normaliza1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -5072,
+        -592
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config1').item.json.PIPELINE_BASE_URL }}/api/items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json.title, clientName: $json.clientName, clientContactName: $json.clientContactName, source: $json.source, networks: $json.networks, externalRef: $json.externalRef }) }}",
+        "options": {}
+      },
+      "id": "176d55ee-0567-4a3b-88b8-aca9275b26ee",
+      "name": "Pipeline Cria Item1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4784,
+        -592
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5W7RxwWwzRNgCD65",
+          "name": "Pipeline API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b01",
+              "name": "itemId",
+              "value": "={{ $json.item.id }}",
+              "type": "string"
+            },
+            {
+              "id": "b02",
+              "name": "itemTitle",
+              "value": "={{ $json.item.title }}",
+              "type": "string"
+            },
+            {
+              "id": "b03",
+              "name": "briefing",
+              "value": "={{ $('Set Normaliza1').item.json.briefing }}",
+              "type": "string"
+            },
+            {
+              "id": "b04",
+              "name": "heygenAvatarId",
+              "value": "={{ $('Set Normaliza1').item.json.heygenAvatarId }}",
+              "type": "string"
+            },
+            {
+              "id": "b05",
+              "name": "heygenVoiceId",
+              "value": "={{ $('Set Normaliza1').item.json.heygenVoiceId }}",
+              "type": "string"
+            },
+            {
+              "id": "b06",
+              "name": "clientPhone",
+              "value": "={{ $('Set Normaliza1').item.json.clientPhone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "11b49361-734c-4d15-bde9-54e0552f8c8d",
+      "name": "Set Item ID1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -4512,
+        -592
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-opus-4-7', max_tokens: 2000, messages: [{ role: 'user', content: 'Voce e um roteirista especialista em conteudo medico educativo para o Dr. Kleber Melo (GrowthMinds). Crie um roteiro para video curto (60-90 segundos) sobre o tema: \"' + $json.briefing + '\"\\n\\nTitulo: \"' + $json.itemTitle + '\"\\n\\nRegras:\\n- Linguagem acessivel ao publico leigo\\n- Medicina baseada em evidencias\\n- Estrutura: GANCHO (5s impactante) > DESENVOLVIMENTO (50-70s com dica pratica) > CTA (10s para seguir o perfil)\\n- Tom: didatico, confiante e humanizado\\n\\nRetorne APENAS o roteiro corrido, sem titulos de secao.' }] }) }}",
+        "options": {}
+      },
+      "id": "181f62b9-7994-4a6f-8dd9-25e64214e7b5",
+      "name": "Claude Gera Roteiro1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4224,
+        -592
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VwGIv4elPDRrZno0",
+          "name": "Anthropic API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c01",
+              "name": "itemId",
+              "value": "={{ $('Set Item ID1').item.json.itemId }}",
+              "type": "string"
+            },
+            {
+              "id": "c02",
+              "name": "itemTitle",
+              "value": "={{ $('Set Item ID1').item.json.itemTitle }}",
+              "type": "string"
+            },
+            {
+              "id": "c03",
+              "name": "script",
+              "value": "={{ $json.content[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "c04",
+              "name": "heygenAvatarId",
+              "value": "={{ $('Set Item ID1').item.json.heygenAvatarId }}",
+              "type": "string"
+            },
+            {
+              "id": "c05",
+              "name": "heygenVoiceId",
+              "value": "={{ $('Set Item ID1').item.json.heygenVoiceId }}",
+              "type": "string"
+            },
+            {
+              "id": "c06",
+              "name": "clientPhone",
+              "value": "={{ $('Set Item ID1').item.json.clientPhone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a3f5cd87-8150-4d98-81db-1ddfd07ec40f",
+      "name": "Set Extrai Roteiro1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3952,
+        -592
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ `${$('Config1').item.json.PIPELINE_BASE_URL}/api/items/${$json.itemId}` }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ script: $json.script }) }}",
+        "options": {}
+      },
+      "id": "b1891806-ac82-49ad-b709-db7087d42ef3",
+      "name": "Pipeline Salva Roteiro1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3664,
+        -592
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5W7RxwWwzRNgCD65",
+          "name": "Pipeline API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ video_inputs: [{ character: { type: 'avatar', avatar_id: $('Set Extrai Roteiro1').item.json.heygenAvatarId, avatar_style: 'normal' }, voice: { type: 'text', voice_id: $('Set Extrai Roteiro1').item.json.heygenVoiceId, input_text: $('Set Extrai Roteiro1').item.json.script, speed: 1.0 }, background: { type: 'color', value: '#1a1a2e' } }], dimension: { width: 720, height: 1280 }, test: false }) }}",
+        "options": {}
+      },
+      "id": "bc4c1ef4-54aa-49d8-a106-a701038cdd26",
+      "name": "HeyGen Submete Video1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3392,
+        -592
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IKxnx1yrRJ2GcD6k",
+          "name": "HeyGen API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d01",
+              "name": "itemId",
+              "value": "={{ $('Set Extrai Roteiro1').item.json.itemId }}",
+              "type": "string"
+            },
+            {
+              "id": "d02",
+              "name": "itemTitle",
+              "value": "={{ $('Set Extrai Roteiro1').item.json.itemTitle }}",
+              "type": "string"
+            },
+            {
+              "id": "d03",
+              "name": "heygenVideoId",
+              "value": "={{ $json.data.video_id }}",
+              "type": "string"
+            },
+            {
+              "id": "d04",
+              "name": "clientPhone",
+              "value": "={{ $('Set Extrai Roteiro1').item.json.clientPhone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0477f733-2ec4-4ac4-a3d4-8f3ad4b9982e",
+      "name": "Set HeyGen ID1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3104,
+        -592
+      ]
+    },
+    {
+      "parameters": {
+        "unit": "minutes",
+        "amount": 5
+      },
+      "id": "8ee8e375-9b54-4ae1-81a0-5fde66bb36cf",
+      "name": "Aguarda 5min1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -2832,
+        -592
+      ],
+      "webhookId": "b5840cec-b641-4ec4-a7e4-fdfabd370e5c"
+    },
+    {
+      "parameters": {
+        "url": "={{ `https://api.heygen.com/v1/video_status.get?video_id=${$('Set HeyGen ID1').item.json.heygenVideoId}` }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "b6ff187c-a09a-497a-a555-3c1bb88da66f",
+      "name": "HeyGen Verifica Status1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2544,
+        -592
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IKxnx1yrRJ2GcD6k",
+          "name": "HeyGen API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond01",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5c74e7af-06f5-4e4b-bc33-48fc7d56e391",
+      "name": "Video Pronto1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2272,
+        -592
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ `${$('Config1').item.json.PIPELINE_BASE_URL}/api/items/${$('Set HeyGen ID1').item.json.itemId}` }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ videoUrl: $json.data.video_url, previewUrl: $json.data.thumbnail_url, durationSeconds: Math.round($json.data.duration ?? 60), markReadyForFinal: true }) }}",
+        "options": {}
+      },
+      "id": "bab44424-74c7-48ae-9479-edd37ab0ae25",
+      "name": "Pipeline Video Pronto1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1984,
+        -704
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5W7RxwWwzRNgCD65",
+          "name": "Pipeline API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `https://api.z-api.io/instances/${$('Config1').item.json.ZAPI_INSTANCE_ID}/token/${$('Config1').item.json.ZAPI_TOKEN}/send-text` }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ phone: $('Set HeyGen ID1').item.json.clientPhone, message: '🎬 *Seu video esta pronto para aprovacao!*\\n\\n📌 *' + $('Set HeyGen ID1').item.json.itemTitle + '*\\n\\nAssista ao preview e aprove ou solicite ajustes:\\n\\n👉 https://pipeline.tudomudou.com.br\\n\\n_Tudo Mudou | Producao de Conteudo_' }) }}",
+        "options": {}
+      },
+      "id": "17efb7f1-b221-4feb-9fa9-fd04d8e82a5a",
+      "name": "WA Notifica Aprovacao1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1712,
+        -704
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "72zQpnHeTGECYIOd",
+          "name": "Client-Token-seguranca"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Intake1": {
+      "main": [
+        [
+          {
+            "node": "Config1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config1": {
+      "main": [
+        [
+          {
+            "node": "Set Normaliza1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Normaliza1": {
+      "main": [
+        [
+          {
+            "node": "Pipeline Cria Item1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipeline Cria Item1": {
+      "main": [
+        [
+          {
+            "node": "Set Item ID1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Item ID1": {
+      "main": [
+        [
+          {
+            "node": "Claude Gera Roteiro1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Gera Roteiro1": {
+      "main": [
+        [
+          {
+            "node": "Set Extrai Roteiro1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Extrai Roteiro1": {
+      "main": [
+        [
+          {
+            "node": "Pipeline Salva Roteiro1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipeline Salva Roteiro1": {
+      "main": [
+        [
+          {
+            "node": "HeyGen Submete Video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HeyGen Submete Video1": {
+      "main": [
+        [
+          {
+            "node": "Set HeyGen ID1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set HeyGen ID1": {
+      "main": [
+        [
+          {
+            "node": "Aguarda 5min1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguarda 5min1": {
+      "main": [
+        [
+          {
+            "node": "HeyGen Verifica Status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HeyGen Verifica Status1": {
+      "main": [
+        [
+          {
+            "node": "Video Pronto1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video Pronto1": {
+      "main": [
+        [
+          {
+            "node": "Pipeline Video Pronto1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aguarda 5min1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipeline Video Pronto1": {
+      "main": [
+        [
+          {
+            "node": "WA Notifica Aprovacao1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "5a76aa879447e3232ad12ca68866151061aabb96ae011935cea9558f7c17bb56"
+  }
+}
