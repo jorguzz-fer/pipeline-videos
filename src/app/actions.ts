@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { Gate, Decision, Channel } from "@prisma/client";
 import { auth, signOut } from "@/auth";
-import { recordDecision } from "@/lib/items";
+import { recordDecision, publishItem, scheduleItem } from "@/lib/items";
 
 function parseGate(value: FormDataEntryValue | null): Gate {
   return value === "FINAL" ? Gate.FINAL : Gate.SCRIPT;
@@ -41,6 +41,36 @@ export async function approveAction(formData: FormData) {
 
 export async function rejectAction(formData: FormData) {
   await decide(formData, Decision.CHANGES_REQUESTED);
+}
+
+async function actorFromSession() {
+  const session = await auth();
+  if (!session?.user) throw new Error("Não autenticado.");
+  return session.user.name ?? session.user.email ?? "Usuário";
+}
+
+// Aprova o vídeo final e publica na hora (AGUARDANDO_FINAL → PUBLICADO).
+export async function publishNowAction(formData: FormData) {
+  const actorName = await actorFromSession();
+  const id = String(formData.get("id") ?? "");
+  if (!id) throw new Error("id ausente.");
+
+  await publishItem(id, new Date(), actorName);
+  revalidatePath("/");
+}
+
+// Aprova o vídeo final e agenda a publicação (AGUARDANDO_FINAL → AGENDADO).
+export async function scheduleAction(formData: FormData) {
+  const actorName = await actorFromSession();
+  const id = String(formData.get("id") ?? "");
+  const when = String(formData.get("scheduledFor") ?? "");
+  if (!id) throw new Error("id ausente.");
+
+  const date = new Date(when);
+  if (Number.isNaN(date.getTime())) throw new Error("Data de agendamento inválida.");
+
+  await scheduleItem(id, date, actorName);
+  revalidatePath("/");
 }
 
 export async function signOutAction() {

@@ -22,6 +22,7 @@ export type ItemVM = {
   showPlay: boolean;
   durationLabel: string | null;
   thumbnailUrl: string | null;
+  videoUrl: string | null;
   gate: "SCRIPT" | "FINAL" | null;
   waitingLabel: string | null;
   metaRight: string | null;
@@ -124,6 +125,7 @@ export function toItemVM(item: ItemWithRelations, now = new Date()): ItemVM {
     showPlay: hasVideo && item.stage !== Stage.AJUSTE_PEDIDO,
     durationLabel: durationLabel(item.durationSeconds),
     thumbnailUrl: item.thumbnailUrl ?? null,
+    videoUrl: item.videoUrl ?? null,
     gate,
     waitingLabel:
       gate != null ? waitingLabel(item.stageChangedAt, now) : null,

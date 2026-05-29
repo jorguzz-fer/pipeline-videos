@@ -3,7 +3,12 @@
 import { useState } from "react";
 import type { ItemVM } from "@/lib/viewModel";
 import { PLATFORM_LABEL } from "@/lib/format";
-import { approveAction, rejectAction } from "@/app/actions";
+import {
+  approveAction,
+  rejectAction,
+  publishNowAction,
+  scheduleAction,
+} from "@/app/actions";
 import { SubmitButton } from "@/components/SubmitButton";
 
 const GRADIENTS = [
@@ -81,44 +86,51 @@ function ClockIcon() {
   );
 }
 
-function ItemActions({ id, gate }: { id: string; gate: "SCRIPT" | "FINAL" }) {
+function RejectForm({
+  id,
+  gate,
+  onCancel,
+}: {
+  id: string;
+  gate: "SCRIPT" | "FINAL";
+  onCancel: () => void;
+}) {
+  return (
+    <form className="reject-form" action={rejectAction}>
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="gate" value={gate} />
+      <textarea
+        name="comment"
+        required
+        placeholder="O que ajustar? (ex.: título ficou agressivo demais pro tom do canal)"
+      />
+      <div className="reject-row">
+        <SubmitButton className="btn btn-no" pendingLabel="Enviando…">
+          Enviar ajuste
+        </SubmitButton>
+        <button type="button" className="btn btn-soft" onClick={onCancel}>
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// Roteiro (gate SCRIPT): aprovar texto ou pedir ajuste.
+function ScriptActions({ id }: { id: string }) {
   const [showReject, setShowReject] = useState(false);
-  const approveLabel = gate === "FINAL" ? "Aprovar e agendar" : "Aprovar roteiro";
 
   if (showReject) {
-    return (
-      <form className="reject-form" action={rejectAction}>
-        <input type="hidden" name="id" value={id} />
-        <input type="hidden" name="gate" value={gate} />
-        <textarea
-          name="comment"
-          required
-          placeholder="O que ajustar? (ex.: título ficou agressivo demais pro tom do canal)"
-        />
-        <div className="reject-row">
-          <SubmitButton className="btn btn-no" pendingLabel="Enviando…">
-            Enviar ajuste
-          </SubmitButton>
-          <button
-            type="button"
-            className="btn"
-            style={{ background: "var(--canvas)", color: "var(--ink-soft)" }}
-            onClick={() => setShowReject(false)}
-          >
-            Cancelar
-          </button>
-        </div>
-      </form>
-    );
+    return <RejectForm id={id} gate="SCRIPT" onCancel={() => setShowReject(false)} />;
   }
 
   return (
     <div className="actions">
       <form action={approveAction} style={{ flex: 1, display: "flex" }}>
         <input type="hidden" name="id" value={id} />
-        <input type="hidden" name="gate" value={gate} />
+        <input type="hidden" name="gate" value="SCRIPT" />
         <SubmitButton className="btn btn-ok" pendingLabel="Aprovando…">
-          {approveLabel}
+          Aprovar roteiro
         </SubmitButton>
       </form>
       <button className="btn btn-no" onClick={() => setShowReject(true)}>
@@ -128,22 +140,107 @@ function ItemActions({ id, gate }: { id: string; gate: "SCRIPT" | "FINAL" }) {
   );
 }
 
+// Vídeo final (gate FINAL): aprovar, publicar agora, agendar ou pedir ajuste.
+function VideoActions({ id }: { id: string }) {
+  const [mode, setMode] = useState<"idle" | "reject" | "schedule">("idle");
+  const [dt, setDt] = useState("");
+
+  if (mode === "reject") {
+    return <RejectForm id={id} gate="FINAL" onCancel={() => setMode("idle")} />;
+  }
+
+  if (mode === "schedule") {
+    return (
+      <form className="schedule-form" action={scheduleAction}>
+        <input type="hidden" name="id" value={id} />
+        <input
+          type="hidden"
+          name="scheduledFor"
+          value={dt ? new Date(dt).toISOString() : ""}
+        />
+        <label>Publicar em</label>
+        <input
+          type="datetime-local"
+          value={dt}
+          onChange={(e) => setDt(e.target.value)}
+          required
+        />
+        <div className="reject-row">
+          <SubmitButton className="btn btn-ok" pendingLabel="Agendando…">
+            Confirmar agendamento
+          </SubmitButton>
+          <button
+            type="button"
+            className="btn btn-soft"
+            onClick={() => setMode("idle")}
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <div className="video-actions">
+      <form action={publishNowAction} className="span2">
+        <input type="hidden" name="id" value={id} />
+        <SubmitButton className="btn btn-ok" pendingLabel="Publicando…">
+          Publicar agora
+        </SubmitButton>
+      </form>
+      <button className="btn btn-soft" onClick={() => setMode("schedule")}>
+        Agendar
+      </button>
+      <form action={approveAction}>
+        <input type="hidden" name="id" value={id} />
+        <input type="hidden" name="gate" value="FINAL" />
+        <SubmitButton className="btn btn-soft" pendingLabel="Aprovando…">
+          Só aprovar
+        </SubmitButton>
+      </form>
+      <button
+        className="btn btn-no span2"
+        onClick={() => setMode("reject")}
+      >
+        Pedir ajuste
+      </button>
+    </div>
+  );
+}
+
 export default function Card({ item }: { item: ItemVM }) {
   const showDocIcon =
     item.stage === "AGUARDANDO_ROTEIRO" || item.stage === "EM_PRODUCAO";
+  const hasPlayer = Boolean(item.videoUrl);
 
   return (
     <div className="card">
-      <div className="preview" style={previewBackground(item)}>
-        <span className="stage-tag" style={tagStyle(item.stageTag.tone)}>
-          {item.stageTag.label}
-        </span>
-        {item.showPlay ? <div className="play" /> : null}
-        {item.showPlay && item.durationLabel ? (
-          <span className="dur">{item.durationLabel}</span>
-        ) : null}
-        {!item.showPlay && showDocIcon ? <DocIcon /> : null}
-      </div>
+      {hasPlayer ? (
+        <div className="preview preview-video">
+          <span className="stage-tag" style={tagStyle(item.stageTag.tone)}>
+            {item.stageTag.label}
+          </span>
+          <video
+            src={item.videoUrl!}
+            poster={item.thumbnailUrl ?? undefined}
+            controls
+            preload="metadata"
+            playsInline
+          />
+        </div>
+      ) : (
+        <div className="preview" style={previewBackground(item)}>
+          <span className="stage-tag" style={tagStyle(item.stageTag.tone)}>
+            {item.stageTag.label}
+          </span>
+          {item.showPlay ? <div className="play" /> : null}
+          {item.showPlay && item.durationLabel ? (
+            <span className="dur">{item.durationLabel}</span>
+          ) : null}
+          {!item.showPlay && showDocIcon ? <DocIcon /> : null}
+        </div>
+      )}
 
       <div className="body">
         <div className="client">
@@ -171,9 +268,8 @@ export default function Card({ item }: { item: ItemVM }) {
         ) : null}
       </div>
 
-      {item.tab === "pending" && item.gate ? (
-        <ItemActions id={item.id} gate={item.gate} />
-      ) : null}
+      {item.gate === "SCRIPT" ? <ScriptActions id={item.id} /> : null}
+      {item.gate === "FINAL" ? <VideoActions id={item.id} /> : null}
 
       {item.inProduction ? (
         <div className="stamp">

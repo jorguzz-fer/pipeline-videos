@@ -6,6 +6,8 @@ import { initials } from "@/lib/format";
 import { signOutAction } from "@/app/actions";
 import Card from "@/components/Card";
 
+type View = "roteiro" | "video" | "history";
+
 function EmptyState({ text }: { text: string }) {
   return (
     <div className="empty">
@@ -20,16 +22,20 @@ function EmptyState({ text }: { text: string }) {
 
 export default function Dashboard({
   userName,
-  pending,
+  roteiros,
+  videos,
   history,
-  pendingCount,
+  roteiroCount,
+  videoCount,
 }: {
   userName: string;
-  pending: ItemVM[];
+  roteiros: ItemVM[];
+  videos: ItemVM[];
   history: ItemVM[];
-  pendingCount: number;
+  roteiroCount: number;
+  videoCount: number;
 }) {
-  const [view, setView] = useState<"pending" | "history">("pending");
+  const [view, setView] = useState<View>(videoCount > 0 ? "video" : "roteiro");
 
   return (
     <>
@@ -58,19 +64,30 @@ export default function Dashboard({
       <div className="wrap">
         <div className="pagehead">
           <div>
-            <h2>Conteúdo para aprovar</h2>
+            <h2>Central de aprovação</h2>
             <p>
-              Revise, aprove ou peça ajuste. O cliente é avisado pelo WhatsApp; o
-              que passar aqui vai pro agendamento.
+              Aprove o roteiro, assista ao vídeo final e publique. O Dr. Kleber
+              é avisado pelo WhatsApp a cada etapa.
             </p>
           </div>
           <div className="tabs">
             <button
-              className={`tab ${view === "pending" ? "active" : ""}`}
-              onClick={() => setView("pending")}
+              className={`tab ${view === "roteiro" ? "active" : ""}`}
+              onClick={() => setView("roteiro")}
             >
-              <span>Pendentes</span>
-              <span className="count">{pendingCount}</span>
+              <span>Roteiros</span>
+              {roteiroCount > 0 ? (
+                <span className="count">{roteiroCount}</span>
+              ) : null}
+            </button>
+            <button
+              className={`tab ${view === "video" ? "active" : ""}`}
+              onClick={() => setView("video")}
+            >
+              <span>Vídeos</span>
+              {videoCount > 0 ? (
+                <span className="count">{videoCount}</span>
+              ) : null}
             </button>
             <button
               className={`tab ${view === "history" ? "active" : ""}`}
@@ -81,23 +98,32 @@ export default function Dashboard({
           </div>
         </div>
 
-        {view === "pending" ? (
+        {view !== "history" ? (
           <div className="channel-note">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
             </svg>
             <span>
-              Notificações ativas via WhatsApp — o Dr. Kleber aprova direto na
-              conversa, e tudo aparece aqui no histórico.
+              {view === "video"
+                ? "Assista ao vídeo, então aprove, publique na hora ou agende. Tudo aparece no histórico."
+                : "Notificações ativas via WhatsApp — o Dr. Kleber acompanha cada etapa pela conversa."}
             </span>
           </div>
         ) : null}
 
-        <div className={`grid ${view !== "pending" ? "hide" : ""}`}>
-          {pending.length === 0 ? (
-            <EmptyState text="Nada pendente por aqui. Tudo em dia." />
+        <div className={`grid ${view !== "roteiro" ? "hide" : ""}`}>
+          {roteiros.length === 0 ? (
+            <EmptyState text="Nenhum roteiro aguardando aprovação." />
           ) : (
-            pending.map((item) => <Card key={item.id} item={item} />)
+            roteiros.map((item) => <Card key={item.id} item={item} />)
+          )}
+        </div>
+
+        <div className={`grid ${view !== "video" ? "hide" : ""}`}>
+          {videos.length === 0 ? (
+            <EmptyState text="Nenhum vídeo em produção ou aguardando aprovação." />
+          ) : (
+            videos.map((item) => <Card key={item.id} item={item} />)
           )}
         </div>
 

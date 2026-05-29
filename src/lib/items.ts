@@ -198,9 +198,9 @@ export async function scheduleItem(
 ) {
   const item = await prisma.contentItem.findUnique({ where: { id } });
   if (!item) return null;
-  if (item.stage !== Stage.APROVADO) {
+  if (item.stage !== Stage.APROVADO && item.stage !== Stage.AGUARDANDO_FINAL) {
     throw new StageTransitionError(
-      `Só itens APROVADO podem ser agendados (atual: ${item.stage}).`
+      `Só itens APROVADO ou AGUARDANDO_FINAL podem ser agendados (atual: ${item.stage}).`
     );
   }
   const updated = await prisma.$transaction(async (tx) => {
@@ -236,15 +236,37 @@ export async function publishItem(
 ) {
   const item = await prisma.contentItem.findUnique({ where: { id } });
   if (!item) return null;
-  if (item.stage !== Stage.AGENDADO && item.stage !== Stage.APROVADO) {
+  if (
+    item.stage !== Stage.AGENDADO &&
+    item.stage !== Stage.APROVADO &&
+    item.stage !== Stage.AGUARDANDO_FINAL
+  ) {
     throw new StageTransitionError(
-      `Só itens AGENDADO/APROVADO podem ser publicados (atual: ${item.stage}).`
+      `Só itens AGENDADO/APROVADO/AGUARDANDO_FINAL podem ser publicados (atual: ${item.stage}).`
     );
   }
-  const updated = await prisma.contentItem.update({
-    where: { id },
-    data: { stage: Stage.PUBLICADO, publishedAt, stageChangedAt: new Date() },
-    include: itemInclude,
+
+  // Publicar direto do portão final registra a aprovação no histórico.
+  const approvingNow = item.stage === Stage.AGUARDANDO_FINAL;
+
+  const updated = await prisma.$transaction(async (tx) => {
+    if (approvingNow) {
+      await tx.approvalEvent.create({
+        data: {
+          contentItemId: id,
+          gate: Gate.FINAL,
+          decision: Decision.APPROVED,
+          channel: Channel.SCREEN,
+          actorName,
+          comment: "Aprovado e publicado",
+        },
+      });
+    }
+    return tx.contentItem.update({
+      where: { id },
+      data: { stage: Stage.PUBLICADO, publishedAt, stageChangedAt: new Date() },
+      include: itemInclude,
+    });
   });
 
   emitEvent("item.published", updated);

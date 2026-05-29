@@ -1,10 +1,7 @@
+import { Stage } from "@prisma/client";
 import { auth } from "@/auth";
 import { listItems } from "@/lib/items";
-import {
-  PENDING_STAGES,
-  HISTORY_STAGES,
-  ACTIONABLE_STAGES,
-} from "@/lib/stages";
+import { PENDING_STAGES, HISTORY_STAGES } from "@/lib/stages";
 import { toItemVM } from "@/lib/viewModel";
 import Dashboard from "@/components/Dashboard";
 
@@ -20,23 +17,40 @@ export default async function Page() {
     listItems({ stages: HISTORY_STAGES }),
   ]);
 
-  const pending = pendingItems.map((i) => toItemVM(i, now));
+  // Roteiros: aguardando aprovação do texto (antes do vídeo).
+  const roteiros = pendingItems
+    .filter((i) => i.stage === Stage.AGUARDANDO_ROTEIRO)
+    .map((i) => toItemVM(i, now));
+
+  // Vídeos: renderizando (EM_PRODUCAO) ou prontos p/ aprovação final.
+  const videos = pendingItems
+    .filter(
+      (i) =>
+        i.stage === Stage.EM_PRODUCAO || i.stage === Stage.AGUARDANDO_FINAL
+    )
+    .map((i) => toItemVM(i, now));
+
   // Histórico: mais recentes primeiro.
   const history = historyItems
     .slice()
     .sort((a, b) => b.stageChangedAt.getTime() - a.stageChangedAt.getTime())
     .map((i) => toItemVM(i, now));
 
-  const actionableCount = pendingItems.filter((i) =>
-    ACTIONABLE_STAGES.includes(i.stage)
+  const roteiroCount = pendingItems.filter(
+    (i) => i.stage === Stage.AGUARDANDO_ROTEIRO
+  ).length;
+  const videoCount = pendingItems.filter(
+    (i) => i.stage === Stage.AGUARDANDO_FINAL
   ).length;
 
   return (
     <Dashboard
       userName={userName}
-      pending={pending}
+      roteiros={roteiros}
+      videos={videos}
       history={history}
-      pendingCount={actionableCount}
+      roteiroCount={roteiroCount}
+      videoCount={videoCount}
     />
   );
 }
