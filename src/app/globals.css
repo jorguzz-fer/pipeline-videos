@@ -652,7 +652,7 @@ header {
   width: 18px;
   height: 18px;
 }
-.login-card button {
+.login-card button[type="submit"] {
   width: 100%;
   margin-top: 20px;
   border: 0;
@@ -666,10 +666,10 @@ header {
   cursor: pointer;
   transition: background 0.15s;
 }
-.login-card button:hover {
+.login-card button[type="submit"]:hover {
   background: #4a2169;
 }
-.login-card button:disabled {
+.login-card button[type="submit"]:disabled {
   opacity: 0.6;
   cursor: default;
 }
