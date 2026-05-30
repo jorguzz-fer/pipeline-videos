@@ -315,11 +315,20 @@ header {
   margin-bottom: 12px;
   border-left: 2.5px solid var(--brand);
   line-height: 1.55;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overscroll-behavior: contain;
+}
+.script::-webkit-scrollbar {
+  width: 6px;
+}
+.script::-webkit-scrollbar-thumb {
+  background: #d3d4d7;
+  border-radius: 3px;
+}
+.script::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-faint);
 }
 .nets {
   display: flex;
